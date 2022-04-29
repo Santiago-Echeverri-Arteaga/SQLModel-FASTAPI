@@ -36,7 +36,7 @@ jobs:
       - persist_to_workspace:
           root: .
           paths:
-            - functionGLDB.zip
+            - functionDynamORM.zip
 
   deploy-dev:
     executor: aws-cli/default
@@ -49,10 +49,10 @@ jobs:
           aws-secret-access-key: AWS_SECRET_ACCESS_KEY
       - run:
           name: Upload to S3
-          command: aws s3 cp functionGLDB.zip s3://fastapi-itnasbucket/functionGLDB.zip
+          command: aws s3 cp functionDynamORM.zip s3://fastapi-itnasbucket/functionDynamORM.zip
       - run:
           name: Deploy Lambda
-          command: aws lambda update-function-code --function-name G_L_DB --s3-bucket fastapi-itnasbucket --s3-key functionGLDB.zip
+          command: aws lambda update-function-code --function-name DynamORM-Test --s3-bucket fastapi-itnasbucket --s3-key functionDynamORM.zip
 
 workflows:
   build-test-and-deploy:
