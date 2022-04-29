@@ -1,0 +1,74 @@
+version: 2.1
+
+orbs:
+  python: circleci/python@1.5.0
+  aws-cli: circleci/aws-cli@1.2.1
+
+jobs:
+  build-and-test:
+    executor:
+      name: python/default
+      tag: '3.7'
+    steps:
+      - checkout
+      - run:
+          name: Create Virtual Environment
+          command: |
+            virtualenv -p python3.7 env
+            echo "source ./env/bin/activate" >> $BASH_ENV
+      - run:
+          name: Installing Dependencies
+          command: pip install -r requirements.txt
+      - run:
+          name: Create ENV file
+          command: env > .env
+      - run:
+          name: Testing
+          command: pytest
+      - run:
+          name: Create Zip File archive of dependencies
+          command: |
+            cd env/lib/python3.7/site-packages
+            zip -r9 ../../../../functionDynamORM.zip .
+      - run:
+          name: Add app to Zip File
+          command: zip -g ./functionDynamORM.zip .env -r app
+      - persist_to_workspace:
+          root: .
+          paths:
+            - functionGLDB.zip
+
+  deploy-dev:
+    executor: aws-cli/default
+    steps:
+      - attach_workspace:
+          at: ./
+      - aws-cli/setup:
+          aws-region: AWS_DEFAULT_REGION
+          aws-access-key-id: AWS_ACCESS_KEY_ID
+          aws-secret-access-key: AWS_SECRET_ACCESS_KEY
+      - run:
+          name: Upload to S3
+          command: aws s3 cp functionGLDB.zip s3://fastapi-itnasbucket/functionGLDB.zip
+      - run:
+          name: Deploy Lambda
+          command: aws lambda update-function-code --function-name G_L_DB --s3-bucket fastapi-itnasbucket --s3-key functionGLDB.zip
+
+workflows:
+  build-test-and-deploy:
+    jobs:
+      - build-and-test:
+          context: Heroes-Dev
+          filters:
+            branches:
+              only:
+                - deployment
+      - deploy-dev:
+          context: Heroes-Dev
+          requires:
+            - build-and-test
+          filters:
+            branches:
+              only:
+                - deployment
+
