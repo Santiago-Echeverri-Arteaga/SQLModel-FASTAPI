@@ -14,7 +14,7 @@ def root():
     Método del directorio home en donde se muestra un mensaje de bienvenida a la app
     """
     mensaje="Bienvenido a la aplicación de superhéroes"
-    return(mensaje)
+    return({"message": mensaje})
 
 # Función que lee AWS Lambdas. Internamente tiene variables events, context
 handler = Mangum(app)
